@@ -6,9 +6,11 @@
 #include <stdlib.h>
 #include <pthread.h>
 
+// Threadpool shutdown type 
 #define IMMEDIATE_SHUTDOWN 1
 #define GRACEFUL_SHUTDOWN 2
 
+// Error type
 #define UNKNOWN_ERROR -1
 #define ALREADY_SHUTDOWN_ERROR -2
 #define ALLOCATE_ERROR -3
@@ -25,8 +27,10 @@ typedef struct threadjob {
 typedef struct threadpool {
 	int				thread_num;
 
+	// The number of jobs waiting in job queue
 	int				queue_size;
 
+	// The head and tail pointer of job queue 
 	threadjob_t		*head;
 	threadjob_t		*tail;
 

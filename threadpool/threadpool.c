@@ -5,6 +5,8 @@
 
 #include "threadpool.h"
 
+// Initialize a threadpool, return the pointer of the threadpool 
+// thread_num: the number of threads in the threadpool 
 threadpool_t * threadpool_init(int thread_num) {
 	threadpool_t *pool = (threadpool_t *)malloc(sizeof(threadpool_t));
 	if (pool == NULL)
@@ -29,16 +31,17 @@ threadpool_t * threadpool_init(int thread_num) {
 	pool->head->args = NULL;
 	pool->head->nxt = NULL;
 
+	// Initialize mutex & condition
 	if (pthread_mutex_init(&(pool->lock), NULL) != 0) {
 		free(pool);
 		return NULL;
 	}
-
 	if (pthread_cond_init(&(pool->cond), NULL) != 0) {
 		free(pool);
 		return NULL;
 	}
 
+	// Create threads
 	for (int i = 0; i < thread_num; ++i) {
 
 		// A thread in threadpool is failed to create;
@@ -48,10 +51,16 @@ threadpool_t * threadpool_init(int thread_num) {
 		}
 		pool->thread_num++;
 	}
+
+	pool->is_shutdown  = 0;
 	
 	return pool;
 }
 
+// Add a job to threadpool 
+// pool: the target threadpool
+// func: job function with the type void * (*)(*)
+// args: arguments of job function
 int threadpool_add(threadpool_t *pool, threadjob_func_t func, void *args) {
 	if (pool == NULL || func == NULL)
 		return UNKNOWN_ERROR;
@@ -83,6 +92,10 @@ int threadpool_add(threadpool_t *pool, threadjob_func_t func, void *args) {
 
 	return 0;
 }
+
+// Destroy this threadpool
+// pool: threadpool to destroy
+// graceful_mode: set value with 1 to wait for all jobs finished, or 0 to destroy immediately
 
 int threadpool_destroy(threadpool_t *pool, int graceful_mode) {
 	if (pool == NULL)
@@ -118,6 +131,8 @@ int threadpool_destroy(threadpool_t *pool, int graceful_mode) {
 	return 0;
 }
 
+// Single thread handle function
+// args: pointer of threadpool which contains this thread
 void *thread_handler(void *args) {
 	if (args == NULL)
 		return NULL;
